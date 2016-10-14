@@ -54,13 +54,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ElasticSearchConfig.cs" />
+    <Compile Include="ElasticSearchService.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ElasticSearchDemo.CommonLib\ElasticSearchDemo.CommonLib.csproj">
+      <Project>{a75b085a-c34d-47b9-b5e4-44506cb392e2}</Project>
+      <Name>ElasticSearchDemo.CommonLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ElasticSearchDemo.Entity\ElasticSearchDemo.Entity.csproj">
+      <Project>{461f3646-0f47-4dc7-81d2-d4602646a63e}</Project>
+      <Name>ElasticSearchDemo.Entity</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
