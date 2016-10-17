@@ -16,6 +16,7 @@ namespace ElasticSearchDemo.CommonLib
         public static readonly ElasticSearchHelper Intance = new ElasticSearchHelper();
 
         private ElasticConnection Client;
+
         private ElasticSearchHelper()
         {
 

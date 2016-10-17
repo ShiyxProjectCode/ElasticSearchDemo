@@ -18,7 +18,7 @@ namespace ElasticSearchDemo.CommonLib
                   | BindingFlags.Public);
               if (ctors.Count() != 1)
                   throw new InvalidOperationException($"Type {typeof (T)} must have exactly one constructor.");
-              var ctor = ctors.SingleOrDefault(c => c.GetParameters().Count() == 0 && c.IsPrivate);
+              var ctor = ctors.SingleOrDefault(c => !c.GetParameters().Any() && c.IsPrivate);
               if (ctor == null)
                   throw new InvalidOperationException(
                       $"The constructor for {typeof (T)} must be private and take no parameters.");

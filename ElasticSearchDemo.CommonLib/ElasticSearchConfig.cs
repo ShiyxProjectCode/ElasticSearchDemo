@@ -41,7 +41,7 @@ namespace ElasticSearchDemo.Console
                     lock (SyncRoot)
                     {
                         if (_esClient == null)
-                            _esClient = new ElasticClient(new ConnectionSettings(new Uri(EsUrl)));
+                            _esClient = new ElasticClient(new ConnectionSettings(new Uri(EsUrl+":"+ EsUrlPort)));
                     }
                 }
                 return _esClient;
