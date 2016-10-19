@@ -30,6 +30,9 @@ namespace ElasticSearchDemo.Console
 
             Thread.Sleep(2000);//等待索引数据生成
 
+            var qureyList = service.Query("5588235");
+            var qureyList1 = service.Query("石霖 谭志团");
+
             //更新数据
             var doctors = service.QueryDoctors("55882350");
             doctors.ForEach(o=>o.DoctorName="Zery000");

@@ -26,7 +26,7 @@ namespace ElasticSearchDemo.Console
         public string CreateIndex()
         {
             string newIndex = ElasticSearchConfig.IndexName + DateTime.Now.ToString("yyyyMMddHHmm");
-            
+
             //创建索引，设置mapping
             var response = _esClient.CreateIndex(newIndex, c =>
                 c.Mappings(m => m.Map<DoctorEntity>(map => map.AutoMap()))
@@ -186,7 +186,7 @@ namespace ElasticSearchDemo.Console
         }
 
         /// <summary>
-        /// 查询索引数据
+        /// 单个属性搜索
         /// </summary>
         /// <param name="doctorId"></param>
         /// <returns></returns>
@@ -198,7 +198,39 @@ namespace ElasticSearchDemo.Console
 
             var result = _esClient.Search<DoctorEntity>(searchDescriptor);
 
+            //第二种
+            QueryContainer termQuery = new TermQuery { Field = "lastname", Value = "keyword" };
+            var searchResults = _esClient.Search<DoctorEntity>(s => s
+                .Index(ElasticSearchConfig.IndexName)
+                .Query(o => termQuery)
+            );
+
             return result.Documents.ToList();
+
+        }
+
+        /// <summary>
+        /// 全文搜索
+        /// </summary>
+        /// <param name="keyword">关键词</param>
+        /// <returns></returns>
+        public IEnumerable<DoctorEntity> Query(string keyword)
+        {
+            var wholeKeyword = keyword;
+            keyword = $"*{keyword}*";//模糊查询需要在关键词外加“**”；
+
+            QueryContainer query = new QueryStringQuery() { Query = keyword, DefaultOperator = Operator.And, };
+            if (!String.IsNullOrEmpty(wholeKeyword))
+            {
+                QueryContainer wholeWordQuery = new QueryStringQuery() { Query = wholeKeyword };
+                query = query || wholeWordQuery;
+            }
+
+            var searchResults = _esClient.Search<DoctorEntity>(s => s
+                .Index(ElasticSearchConfig.IndexName)
+                .Query(o => query).Sort(c => c.Ascending(p => p.HospitalNumber)));//针对中文排序有问题
+
+            return searchResults.Documents;
         }
 
         public List<DoctorEntity> BuiDoctorEntities()
@@ -217,7 +249,7 @@ namespace ElasticSearchDemo.Console
                     HospitalDepartmentName = "内科",
                     HospitalId = Guid.NewGuid().ToString(),
                     HospitalName = "北京大学深圳医院",
-                    HospitalNumber = "bjdxszyy",
+                    HospitalNumber = "bjdxszyy"+i,
                     ProfessionalDepartmentId = "225" + i,
                     ProfessionalDepartmentName = "心胸内科",
                     SupplierNumber = "Thirdpart"
