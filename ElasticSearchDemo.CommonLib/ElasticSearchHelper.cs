@@ -34,7 +34,7 @@ namespace ElasticSearchDemo.CommonLib
                     lock (SyncRoot)
                     {
                         if (_esClient == null)
-                            _esClient = new ElasticConnection(ElasticSearchConfig.EsUrl,9200);
+                            _esClient = new ElasticConnection(ElasticSearchConfig.EsUrl, 9200);
                     }
                 }
                 return _esClient;
@@ -69,7 +69,7 @@ namespace ElasticSearchDemo.CommonLib
         {
             var serializer = new JsonNetSerializer();
             string cmd = new IndexCommand(indexName, indexType, id);
-            OperationResult result = Client.Put(ElasticSearchConfig.EsUrl+":"+ElasticSearchConfig.EsUrlPort+"/"+cmd, jsonDocument);
+            OperationResult result = Client.Put(ElasticSearchConfig.EsUrl + ":" + ElasticSearchConfig.EsUrlPort + "/" + cmd, jsonDocument);
 
             var indexResult = serializer.ToIndexResult(result.Result);
             return indexResult;
@@ -314,11 +314,19 @@ namespace ElasticSearchDemo.CommonLib
         //将语句用ik分词，返回分词结果的集合
         private List<string> GetIKTokenFromStr(string key)
         {
-            string esUrl = ElasticSearchConfig.EsUrl + ":" + ElasticSearchConfig.EsUrlPort;
-            
-            string s = esUrl + "/db_test/_analyze?analyzer=ik";
+            string esUrl = ElasticSearchConfig.EsUrl + ":" + ElasticSearchConfig.EsUrlPort + "/";
+
+            string s = esUrl + "db_test/person/_search";
+            string jsonData = "{ \"name\": \"" + key + "\" }";
+            string query = new QueryBuilder<person>()        // This will generate: 
+              .Query(q => q                         // { "query": { "term": { "User": "somebody" } } }
+                .Match(t => t
+                  .Field(tweet => tweet.name).Query(key)
+                )
+              ).Build();
+
             string bulkCommand = new BulkCommand(index: "db_test", type: "person");
-            var result = Client.Post(esUrl+"/"+ bulkCommand, "{" + key + "}");
+            var result = Client.Post(s, query);
             var serializer = new JsonNetSerializer();
             var list = serializer.Deserialize(result, typeof(ik)) as ik;
             return list.tokens.Select(c => c.token).ToList();
