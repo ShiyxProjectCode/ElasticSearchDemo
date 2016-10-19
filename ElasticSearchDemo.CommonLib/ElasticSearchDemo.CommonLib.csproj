@@ -66,6 +66,12 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ElasticSearchDemo.Entity\ElasticSearchDemo.Entity.csproj">
+      <Project>{461f3646-0f47-4dc7-81d2-d4602646a63e}</Project>
+      <Name>ElasticSearchDemo.Entity</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
