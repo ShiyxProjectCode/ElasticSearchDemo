@@ -324,12 +324,13 @@ namespace ElasticSearchDemo.CommonLib
                   .Field(tweet => tweet.name).Query(key)
                 )
               ).Build();
-
-            string bulkCommand = new BulkCommand(index: "db_test", type: "person");
+            
             var result = Client.Post(s, query);
             var serializer = new JsonNetSerializer();
-            var list = serializer.Deserialize(result, typeof(ik)) as ik;
-            return list.tokens.Select(c => c.token).ToList();
+            var list = serializer.Deserialize(result, typeof(IKAnalyerEntity)) as IKAnalyerEntity;
+            //var l= list.hits.Select(c => c.hits.Select(o=>o._source).Select(o=>o.name)).ToList();
+
+            return null;
         }
     }
     public class S
