@@ -21,8 +21,10 @@ namespace ElasticSearch.WebApi.Controllers
             int size = 50;
             //var result = ElasticSearchHelper.Instance.Search(index, type, key, from, size);
 
-            var result1 = ElasticSearchHelper.Instance.SearchFullFileds(index, type, key, from, size);
-            var result2 = ElasticSearchHelper.Instance.SearchFullFiledss(index, type, key, from, size);
+            var analyer = ElasticSearchHelper.Instance.GetIKTokenizer(index, "中华人民共和国国歌");
+
+            //var result1 = ElasticSearchHelper.Instance.SearchFullFileds(index, type, key, from, size);
+            //var result2 = ElasticSearchHelper.Instance.SearchFullFiledss(index, type, key, from, size);
 
             return View();
         }

@@ -323,7 +323,7 @@ namespace ElasticSearchDemo.CommonLib
         }
 
         //将语句用ik分词，返回分词结果的集合
-        private List<string> GetIKTokenizer(string index, string key)
+        public List<string> GetIKTokenizer(string index, string key)
         {
             string esUrl = ElasticSearchConfig.EsUrl;
 
