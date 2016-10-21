@@ -1,14 +1,14 @@
 ﻿using ElasticSearchDemo.Console;
 using ElasticSearchDemo.Entity;
 using PlainElastic.Net;
+using PlainElastic.Net.IndexSettings;
 using PlainElastic.Net.Mappings;
 using PlainElastic.Net.Queries;
 using PlainElastic.Net.Serialization;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using Nest;
 using JsonNetSerializer = PlainElastic.Net.Serialization.JsonNetSerializer;
+using TermVector = PlainElastic.Net.Mappings.TermVector;
 
 namespace ElasticSearchDemo.CommonLib
 {
@@ -17,7 +17,9 @@ namespace ElasticSearchDemo.CommonLib
     /// </summary>
     public class ElasticSearchHelper
     {
-        private ElasticSearchHelper() { }
+        private ElasticSearchHelper()
+        {
+        }
 
         private static ElasticConnection _esClient;
 
@@ -25,6 +27,9 @@ namespace ElasticSearchDemo.CommonLib
 
         private static readonly object SyncRoot = new object();
 
+        /// <summary>
+        /// es 连接实例
+        /// </summary>
         public static ElasticConnection Client
         {
             get
@@ -41,6 +46,9 @@ namespace ElasticSearchDemo.CommonLib
             }
         }
 
+        /// <summary>
+        /// helper实例
+        /// </summary>
         public static ElasticSearchHelper Instance
         {
             get
@@ -57,6 +65,7 @@ namespace ElasticSearchDemo.CommonLib
                 return instance;
             }
         }
+
         /// <summary>
         /// 数据索引
         /// </summary>
@@ -69,7 +78,7 @@ namespace ElasticSearchDemo.CommonLib
         {
             var serializer = new JsonNetSerializer();
             string cmd = new IndexCommand(indexName, indexType, id);
-            OperationResult result = Client.Put(ElasticSearchConfig.EsUrl + ":" + ElasticSearchConfig.EsUrlPort + "/" + cmd, jsonDocument);
+            OperationResult result = Client.Put(ElasticSearchConfig.EsUrl + cmd, jsonDocument);
 
             var indexResult = serializer.ToIndexResult(result.Result);
             return indexResult;
@@ -120,7 +129,7 @@ namespace ElasticSearchDemo.CommonLib
                      )
                     .Build();
 
-            string result = Client.Post(cmd, query);
+            string result = Client.Post(ElasticSearchConfig.EsUrl + cmd, query);
             var serializer = new JsonNetSerializer();
             var list = serializer.ToSearchResult<person>(result);
             personList datalist = new personList();
@@ -145,14 +154,15 @@ namespace ElasticSearchDemo.CommonLib
         {
             MustQuery<person> mustNameQueryKeys = new MustQuery<person>();
             MustQuery<person> mustIntroQueryKeys = new MustQuery<person>();
-            var arrKeys = GetIKTokenFromStr(key);
+
+            var arrKeys = GetIKTokenizer(indexName, key);
             foreach (var item in arrKeys)
             {
-                mustNameQueryKeys = mustNameQueryKeys.Term(t3 => t3.Field("name").Value(item)) as MustQuery<person>;
-                mustIntroQueryKeys = mustIntroQueryKeys.Term(t3 => t3.Field("intro").Value(item)) as MustQuery<person>;
+                mustNameQueryKeys = mustNameQueryKeys?.Term(t3 => t3.Field("name").Value(item)) as MustQuery<person>;
+                mustIntroQueryKeys = mustIntroQueryKeys?.Term(t3 => t3.Field("intro").Value(item)) as MustQuery<person>;
             }
 
-            string cmd = new SearchCommand(indexName, indexType);
+            string cmd = ElasticSearchConfig.EsUrl + new SearchCommand(indexName, indexType);
             string query = new QueryBuilder<person>()
                 //1 查询
                 .Query(b =>
@@ -166,16 +176,16 @@ namespace ElasticSearchDemo.CommonLib
                                                                  mustNameQueryKeys
                                                              )
                                                 )
-                                       )
-                               .Should(t =>
-                                         t.Bool(m1 =>
-                                                     m1.Must(t2 =>
-                                                                     //t2.Term(t3 => t3.Field("intro").Value("研究"))
-                                                                     //.Term(t3 => t3.Field("intro").Value("方鸿渐"))
-                                                                     mustIntroQueryKeys
-                                                            )
-                                                )
-                                      )
+                                       ).Should(ts => ts.Bool(m1 =>
+                                                                         m1.Must(t2 =>
+                                                                                        //t2.Term(t3 => t3.Field("intro").Value("研究"))
+                                                                                        //.Term(t3 => t3.Field("intro").Value("方鸿渐"))
+
+                                                                                        //
+                                                                                        mustIntroQueryKeys
+                                                                                )
+                                                                   )
+                                                          )
                                   )
                         )
                  //分页
@@ -219,14 +229,15 @@ namespace ElasticSearchDemo.CommonLib
         {
             MustQuery<person> mustNameQueryKeys = new MustQuery<person>();
             MustQuery<person> mustIntroQueryKeys = new MustQuery<person>();
-            var arrKeys = GetIKTokenFromStr(key);
+            var arrKeys = GetIKTokenizer(indexName, key);
             foreach (var item in arrKeys)
             {
-                mustNameQueryKeys = mustNameQueryKeys.Term(t3 => t3.Field("name").Value(item)) as MustQuery<person>;
-                mustIntroQueryKeys = mustIntroQueryKeys.Term(t3 => t3.Field("intro").Value(item)) as MustQuery<person>;
+                mustNameQueryKeys = mustNameQueryKeys?.Term(t3 => t3.Field("name").Value(item)) as MustQuery<person>;
+                mustIntroQueryKeys = mustIntroQueryKeys?.Term(t3 => t3.Field("intro").Value(item)) as MustQuery<person>;
             }
 
             string cmd = new SearchCommand(indexName, indexType);
+            cmd = ElasticSearchConfig.EsUrl + cmd;
             string query = new QueryBuilder<person>()
                 //1 查询
                 .Query(b =>
@@ -312,27 +323,90 @@ namespace ElasticSearchDemo.CommonLib
         }
 
         //将语句用ik分词，返回分词结果的集合
-        private List<string> GetIKTokenFromStr(string key)
+        private List<string> GetIKTokenizer(string index, string key)
         {
-            string esUrl = ElasticSearchConfig.EsUrl + ":" + ElasticSearchConfig.EsUrlPort + "/";
+            string esUrl = ElasticSearchConfig.EsUrl;
 
-            string s = esUrl + "db_test/person/_search";
-            string jsonData = "{ \"name\": \"" + key + "\" }";
-            string query = new QueryBuilder<person>()        // This will generate: 
-              .Query(q => q                         // { "query": { "term": { "User": "somebody" } } }
-                .Match(t => t
-                  .Field(tweet => tweet.name).Query(key)
-                )
-              ).Build();
-            
-            var result = Client.Post(s, query);
+            string command = esUrl + index + "/_analyze?analyzer=ik&pretty=true";
+            string jsonData = "{\"text\":\"{" + key + "}\"}";
+            var result = Client.Post(command, jsonData);
             var serializer = new JsonNetSerializer();
-            var list = serializer.Deserialize(result, typeof(IKAnalyerEntity)) as IKAnalyerEntity;
-            //var l= list.hits.Select(c => c.hits.Select(o=>o._source).Select(o=>o.name)).ToList();
 
-            return null;
+            //CreateMap();
+
+            var list = serializer.Deserialize(result, typeof(IKAnalyerEntity)) as IKAnalyerEntity;
+            return list?.tokens.Select(o => o.token).ToList();
+        }
+
+        /// <summary>
+        /// 生成索引
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public bool CreateIndexSetting(string index)
+        {
+            //索引设置
+            var setting = new IndexSettingsBuilder().Analysis(als => als
+              .Analyzer(a => a
+                  .Custom("ik", custom => custom
+                      .Tokenizer("ik")
+                  )
+              )
+            )
+            .BuildBeautified();
+
+            string esUrl = ElasticSearchConfig.EsUrl;
+
+            string command = esUrl + index;
+
+            var result = Client.Post(command, setting);
+            //判断生成索引结果
+            if (result.Result.Contains("\"acknowledged\":true"))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 生成mapping
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public bool CreateMap(string index, string type)
+        {
+            bool result = false;
+            if (string.IsNullOrWhiteSpace(index) || string.IsNullOrWhiteSpace(type))
+                return false;
+
+            string _index = index;
+            string _type = type;
+            string esUrl = ElasticSearchConfig.EsUrl;
+
+            //生成mapping
+            var mapping = new MapBuilder<person>()
+            .RootObject(typeName: type,
+                        map: r => r
+                .All(a => a.Analyzer("ik_smart").SearchAnalyzer("ik_smart").TermVector(TermVector.no).Store(false))
+                .Properties(pr => pr
+                    .String(company => company.name, f => f.Analyzer("ik_smart").SearchAnalyzer("ik_smart").IncludeInAll(true).Boost(8))
+                    .String(company => company.intro, f => f.Analyzer("ik_smart").SearchAnalyzer("ik_smart").IncludeInAll(true).Boost(8))
+                    )
+                    ).BuildBeautified();
+
+            string command = esUrl + $"{_index}/{_type}/_mapping";
+            var responseMap = Client.Post(command, mapping);
+
+            //注意不要存在空格
+            if (responseMap.Result.Contains("\"acknowledged\":true"))
+            {
+                result = true;
+            }
+            return result;
         }
     }
+
     public class S
     {
         public static string test = @"　　　　　　　　　　　　　　钱钟书《围城》

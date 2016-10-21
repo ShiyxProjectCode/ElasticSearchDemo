@@ -20,11 +20,6 @@ namespace ElasticSearchDemo.Console
         public static string EsUrl = ConfigurationManager.AppSettings["esHostUrl"];
 
         /// <summary>
-        /// es 服务端口
-        /// </summary>
-        public static string EsUrlPort = ConfigurationManager.AppSettings["esHostUrlPort"];
-
-        /// <summary>
         /// 索引别名
         /// </summary>
         public static string IndexName = ConfigurationManager.AppSettings["esIndexName"];
@@ -41,7 +36,7 @@ namespace ElasticSearchDemo.Console
                     lock (SyncRoot)
                     {
                         if (_esClient == null)
-                            _esClient = new ElasticClient(new ConnectionSettings(new Uri(EsUrl+":"+ EsUrlPort)));
+                            _esClient = new ElasticClient(new ConnectionSettings(new Uri(EsUrl)));
                     }
                 }
                 return _esClient;

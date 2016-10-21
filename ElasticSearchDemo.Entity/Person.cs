@@ -11,38 +11,15 @@ namespace ElasticSearchDemo.Entity
     /// </summary>
     public class IKAnalyerEntity
     {
-        public string took { get; set; }
-
-        public bool timed_out { get; set; }
-
-        public _shards _shards { get; set; }
-        
-        public hitsEntity hits { get; set; }
+        public List<tokens> tokens { get; set; }
     }
-
-    public class _shards
+    public class tokens
     {
-        public int total { get; set; }
-        public int successful { get; set; }
-        public int failed { get; set; }
-    }
-
-    public class hitsEntity
-    {
-        public string total { get; set; }
-        public string max_score { get; set; }
-        public List<recoard> hits { get; set; }
-    }
-
-    public class recoard
-    {
-        public string _index { get; set; }
-        public string _type { get; set; }
-        public string _id { get; set; }
-
-        public string _score { get; set; }
-
-        public person _source { get; set; }
+        public string token { get; set; }
+        public int start_offset { get; set; }
+        public int end_offset { get; set; }
+        public string type { get; set; }
+        public int position { get; set; }
     }
 
     /// <summary>
@@ -58,6 +35,7 @@ namespace ElasticSearchDemo.Entity
         public int took { get; set; }
         public List<person> list { get; set; }
     }
+
     public class person
     {
         public string id { get; set; }
