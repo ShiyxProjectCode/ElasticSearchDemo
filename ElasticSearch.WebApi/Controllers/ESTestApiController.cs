@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
+﻿using ElasticSearchDemo.CommonLib;
+using ElasticSearchDemo.Entity;
+using System;
 using System.Threading.Tasks;
 using System.Web.Http;
-using ElasticSearchDemo.CommonLib;
-using ElasticSearchDemo.Entity;
 
 namespace ElasticSearch.WebApi.Controllers
 {
@@ -22,11 +18,9 @@ namespace ElasticSearch.WebApi.Controllers
             int? from = GetIntRequest("from");
             int? size = GetIntRequest("size");
 
-            return ElasticSearchHelper.Instance.Search("db_test", "person", key ?? "方鸿渐", from == null ? 0 : from.Value, size == null ? 20 : size.Value);
-
-
-
+            return ElasticSearchHelper.Instance.Search("db_test", "person", key ?? "方鸿渐个人", from == null ? 0 : from.Value, size == null ? 20 : size.Value);
         }
+
         [Route("estest/SearchFullFileds")]
         [HttpGet]
         public object SearchFullFileds()
@@ -35,11 +29,9 @@ namespace ElasticSearch.WebApi.Controllers
             string key = GetStringRequest("Key");
             int? from = GetIntRequest("from");
             int? size = GetIntRequest("size");
-            return ElasticSearchHelper.Instance.SearchFullFileds("test_index", "person", key ?? "方鸿渐家庭问题呢", from == null ? 0 : from.Value, size == null ? 20 : size.Value);
-
-
-
+            return ElasticSearchHelper.Instance.SearchFullFileds("test_index", "person", key ?? "方鸿渐个人", @from ?? 0, size ?? 20);
         }
+
         [Route("estest/SearchFullFiledss")]
         [HttpGet]
         public object SearchFullFiledss()
@@ -48,7 +40,7 @@ namespace ElasticSearch.WebApi.Controllers
             string key = GetStringRequest("Key");
             int? from = GetIntRequest("from");
             int? size = GetIntRequest("size");
-            return ElasticSearchHelper.Instance.SearchFullFiledss("test_index", "person", string.IsNullOrWhiteSpace(key) ? "方鸿渐家庭问题呢" : key, from == null ? 0 : from.Value, size == null ? 20 : size.Value);
+            return ElasticSearchHelper.Instance.SearchFullFiledss("test_index", "person", string.IsNullOrWhiteSpace(key) ? "方鸿渐个人" : key, @from ?? 0, size ?? 20);
         }
 
         /// <summary>
@@ -67,7 +59,7 @@ namespace ElasticSearch.WebApi.Controllers
 
             //生成map
             ElasticSearchHelper.Instance.CreateMap(index, type);
-            
+
             int length = S.test.Length;
             Random rd = new Random();
             Random rdName = new Random();
@@ -75,7 +67,6 @@ namespace ElasticSearch.WebApi.Controllers
             _po.MaxDegreeOfParallelism = 4;
             Parallel.For(0, 10000, _po, c =>
             {
-
                 var start = rd.Next(0, S.test.Length - 700);
                 var startName = rd.Next(0, S.test.Length - 30);
                 person p = new person() { age = DateTime.Now.Millisecond, birthday = DateTime.Now, id = Guid.NewGuid().ToString(), intro = S.test.Substring(start, 629) + c, name = S.test.Substring(startName, 29) + c, sex = true };

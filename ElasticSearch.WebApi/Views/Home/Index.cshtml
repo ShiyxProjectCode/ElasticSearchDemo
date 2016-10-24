@@ -11,15 +11,13 @@
     }
 </style>
 <script>
-    @*$(function () {
+    $(function () {
         function ViewModel() {
             self = this;
             self.getData = ko.observableArray();
             //定义加载数据方法
             self.loadData = function () {
                 $.get("http://localhost:1414/api/estest/SearchFullFiledss", { key: "@Request.QueryString["key"]", from: "@Request.QueryString["from"]", size: "@Request.QueryString["size"]" }, function (data) {
-                    // alert(data.hits);
-                    // alert(data.list.length);
                     $("#count").text("符合条件的数据供：" + data.hits + "  共花费了：" + data.took + "毫秒");
 
                     $.each(data.list, function (i) {
@@ -27,14 +25,14 @@
 
                     });
                     self.getData(data.list);
-                }, "jsonp");
+                }, "json");
             };
             //调用定义方法
             self.loadData();
         }
         ko.applyBindings(new ViewModel());
 
-    });*@
+    });
 
 
 </script>

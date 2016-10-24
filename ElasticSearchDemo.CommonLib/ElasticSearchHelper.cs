@@ -91,9 +91,16 @@ namespace ElasticSearchDemo.CommonLib
             return Index(indexName, indexType, id, jsonDocument);
         }
 
-        //全文检索，单个字段或者多字段 或关系
-        //字段intro 包含词组key中的任意一个单词
-        //
+        /// <summary>
+        /// 全文检索，单个字段或者多字段 或关系
+        /// 字段intro 包含词组key中的任意一个单词
+        /// </summary>
+        /// <param name="indexName"></param>
+        /// <param name="indexType"></param>
+        /// <param name="key"></param>
+        /// <param name="from"></param>
+        /// <param name="size"></param>
+        /// <returns></returns>
         public personList Search(string indexName, string indexType, string key, int from, int size)
         {
             string cmd = new SearchCommand(indexName, indexType);
@@ -148,14 +155,22 @@ namespace ElasticSearchDemo.CommonLib
             return datalist;
         }
 
-        //全文检索，多字段 并关系
-        //字段intro 或者name 包含词组key
+        /// <summary>
+        /// 全文检索，多字段 并关系
+        /// 字段intro 或者name 包含词组key
+        /// </summary>
+        /// <param name="indexName"></param>
+        /// <param name="indexType"></param>
+        /// <param name="key"></param>
+        /// <param name="from"></param>
+        /// <param name="size"></param>
+        /// <returns></returns>
         public personList SearchFullFileds(string indexName, string indexType, string key, int from, int size)
         {
             MustQuery<person> mustNameQueryKeys = new MustQuery<person>();
             MustQuery<person> mustIntroQueryKeys = new MustQuery<person>();
 
-            var arrKeys = GetIKTokenizer(indexName, key);
+            var arrKeys = GetIkTokenizer(indexName, key);
             foreach (var item in arrKeys)
             {
                 mustNameQueryKeys = mustNameQueryKeys?.Term(t3 => t3.Field("name").Value(item)) as MustQuery<person>;
@@ -223,13 +238,21 @@ namespace ElasticSearchDemo.CommonLib
             return datalist;
         }
 
-        //全文检索，多字段 并关系
-        //搜索age在100到200之间，并且字段intro 或者name 包含词组key
+        /// <summary>
+        /// 全文检索，多字段 并关系
+        /// 搜索age在100到200之间，并且字段intro,name 包含词组key
+        /// </summary>
+        /// <param name="indexName">索引名称</param>
+        /// <param name="indexType">索引类型</param>
+        /// <param name="key">搜索关键词</param>
+        /// <param name="from">页索引</param>
+        /// <param name="size">页大小</param>
+        /// <returns></returns>
         public personList SearchFullFiledss(string indexName, string indexType, string key, int from, int size)
         {
             MustQuery<person> mustNameQueryKeys = new MustQuery<person>();
             MustQuery<person> mustIntroQueryKeys = new MustQuery<person>();
-            var arrKeys = GetIKTokenizer(indexName, key);
+            var arrKeys = GetIkTokenizer(indexName, key);
             foreach (var item in arrKeys)
             {
                 mustNameQueryKeys = mustNameQueryKeys?.Term(t3 => t3.Field("name").Value(item)) as MustQuery<person>;
@@ -306,33 +329,21 @@ namespace ElasticSearchDemo.CommonLib
             return datalist;
         }
 
-        //分词映射
-        private static string BuildCompanyMapping()
-        {
-            return new MapBuilder<person>()
-                .RootObject(typeName: "person",
-                            map: r => r
-                    .All(a => a.Enabled(false))
-                    .Dynamic(false)
-                    .Properties(pr => pr
-                        .String(person => person.name, f => f.Analyzer(DefaultAnalyzers.standard).Boost(2))
-                        .String(person => person.intro, f => f.Analyzer("ik"))
-                        )
-              )
-              .BuildBeautified();
-        }
-
         //将语句用ik分词，返回分词结果的集合
-        public List<string> GetIKTokenizer(string index, string key)
+        public List<string> GetIkTokenizer(string index, string key)
         {
             string esUrl = ElasticSearchConfig.EsUrl;
 
-            string command = esUrl + index + "/_analyze?analyzer=ik&pretty=true";
+            /**
+             * ik_max_word: 会将文本做最细粒度的拆分
+             * ik_smart: 会做最粗粒度的拆分
+             */
+            string ik = "ik_smart";
+
+            string command = esUrl + index + $"/_analyze?tokenizer={ik}";
             string jsonData = "{\"text\":\"{" + key + "}\"}";
             var result = Client.Post(command, jsonData);
             var serializer = new JsonNetSerializer();
-
-            //CreateMap();
 
             var list = serializer.Deserialize(result, typeof(IKAnalyerEntity)) as IKAnalyerEntity;
             return list?.tokens.Select(o => o.token).ToList();
@@ -384,14 +395,17 @@ namespace ElasticSearchDemo.CommonLib
             string _type = type;
             string esUrl = ElasticSearchConfig.EsUrl;
 
+            string ik_smart = "ik_smart";
+            string ik_max_word = "ik_max_word";
+
             //生成mapping
             var mapping = new MapBuilder<person>()
             .RootObject(typeName: type,
                         map: r => r
-                .All(a => a.Analyzer("ik_smart").SearchAnalyzer("ik_smart").TermVector(TermVector.no).Store(false))
+                .All(a => a.Analyzer(ik_smart).SearchAnalyzer(ik_smart).TermVector(TermVector.no).Store(false))
                 .Properties(pr => pr
-                    .String(company => company.name, f => f.Analyzer("ik_smart").SearchAnalyzer("ik_smart").IncludeInAll(true).Boost(8))
-                    .String(company => company.intro, f => f.Analyzer("ik_smart").SearchAnalyzer("ik_smart").IncludeInAll(true).Boost(8))
+                    .String(company => company.name, f => f.Analyzer(ik_smart).SearchAnalyzer(ik_smart).IncludeInAll(true).Boost(8))
+                    .String(company => company.intro, f => f.Analyzer(ik_smart).SearchAnalyzer(ik_smart).IncludeInAll(true).Boost(8))
                     )
                     ).BuildBeautified();
 
