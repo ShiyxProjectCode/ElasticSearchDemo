@@ -17,7 +17,7 @@
             self.getData = ko.observableArray();
             //定义加载数据方法
             self.loadData = function () {
-                $.get("http://localhost:1414/api/estest/SearchFullFiledss", { key: "@Request.QueryString["key"]", from: "@Request.QueryString["from"]", size: "@Request.QueryString["size"]" }, function (data) {
+                $.get("/api/esapi/SearchFullFileds1", { key: "@Request.QueryString["key"]", from: "@Request.QueryString["from"]", size: "@Request.QueryString["size"]" }, function (data) {
                     $("#count").text("符合条件的数据供：" + data.hits + "  共花费了：" + data.took + "毫秒");
 
                     $.each(data.list, function (i) {
